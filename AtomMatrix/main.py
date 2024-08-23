@@ -7,7 +7,7 @@ dispMatrix = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
 rgb.set_screen(dispMatrix)
 imu0 = imu.IMU()
 colour = 0xffff00
-dispType = "arrow"
+dispType = "lines"
 i = 0
 j = 0
 
@@ -55,9 +55,9 @@ def goForward():
   elif dispType == "shortArrow":
     dispMatrix = [0,0,0,0,0,0,0,0,0,0,0,0,colour,0,0,0,colour,0,colour,0,colour,0,0,0,colour]
   elif dispType == "2lines":
-    dispMatrix = [colour,colour,colour,colour,colour,colour,colour,colour,colour,colour,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    dispMatrix = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,colour,colour,colour,colour,colour,colour,colour,colour,colour,colour]
   else:
-    dispMatrix = [colour,colour,colour,colour,colour,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    dispMatrix = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,colour,colour,colour,colour,colour]
   for i in range(5):
     #dispMatrix = dispMatrix [5: ] + dispMatrix[ :5]
     dispMatrix = rotMatrix(dispMatrix, 5)
@@ -82,9 +82,9 @@ def goBack():
   elif dispType == "shortArrow":
     dispMatrix = [colour,0,0,0,colour,0,colour,0,colour,0,0,0,colour,0,0,0,0,0,0,0,0,0,0,0,0]
   elif dispType == "2lines":
-    dispMatrix = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,colour,colour,colour,colour,colour,colour,colour,colour,colour,colour]
+    dispMatrix = [colour,colour,colour,colour,colour,colour,colour,colour,colour,colour,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
   else:
-    dispMatrix = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,colour,colour,colour,colour,colour]
+    dispMatrix = [colour,colour,colour,colour,colour,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
   for i in range(5):
     rgb.set_screen(dispMatrix)
     dispMatrix = revMatrix(dispMatrix, 5)
@@ -135,7 +135,7 @@ def goRight():
   elif dispType == "2lines":
     dispMatrix = [colour,colour,0,0,0,colour,colour,0,0,0,colour,colour,0,0,0,colour,colour,0,0,0,colour,colour,0,0,0]
   else:
-    dispMatrix = [0,0,0,0,colour,0,0,0,0,colour,0,0,0,0,colour,0,0,0,0,colour,0,0,0,0,colour]
+    dispMatrix = [colour,0,0,0,0,colour,0,0,0,0,colour,0,0,0,0,colour,0,0,0,0,colour,0,0,0,0]
   for i in range(5):
     rgb.set_screen(dispMatrix)
     dispMatrix = revMatrix(dispMatrix, 1)
