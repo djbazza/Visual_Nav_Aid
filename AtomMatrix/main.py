@@ -51,7 +51,7 @@ def goForward():
   global dispMatrix
   dispMatrix = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
   if dispType == "arrow":
-    dispMatrix = [0,0,0x37ff00,0,0,0,0x37ff00,0x37ff00,0x37ff00,0,0x37ff00,0,0x37ff00,0,0x37ff00,0,0,0x37ff00,0,0,0,0,0x37ff00,0,0]
+    dispMatrix = [0,0,colour,0,0,0,colour,colour,colour,0,colour,0,colour,0,colour,0,0,colour,0,0,0,0,colour,0,0]
   elif dispType == "shortArrow":
     dispMatrix = [0,0,0,0,0,0,0,0,0,0,0,0,colour,0,0,0,colour,0,colour,0,colour,0,0,0,colour]
   elif dispType == "2lines":
@@ -60,25 +60,16 @@ def goForward():
     dispMatrix = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,colour,colour,colour,colour,colour]
   for i in range(5):
     #dispMatrix = dispMatrix [5: ] + dispMatrix[ :5]
-    dispMatrix = rotMatrix(dispMatrix, 5)
     rgb.set_screen(dispMatrix)
+    dispMatrix = rotMatrix(dispMatrix, 5)
     wait(0.1)
 
-#    global i
-#    global j
-#    j=6
-#    rgb.set_screen(dispMatrix(i,j))
-#    if i < 0:
-#      i=5
-#    else:
-#      i=i-1
-  
 def goBack():
   global i
   global dispMatrix
   dispMatrix = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
   if dispType == "arrow":
-    dispMatrix = [0,0,0x37ff00,0,0,0,0,0x37ff00,0,0,0x37ff00,0,0x37ff00,0,0x37ff00,0,0x37ff00,0x37ff00,0x37ff00,0,0,0,0x37ff00,0,0]
+    dispMatrix = [0,0,colour,0,0,0,0,colour,0,0,colour,0,colour,0,colour,0,colour,colour,colour,0,0,0,colour,0,0]
   elif dispType == "shortArrow":
     dispMatrix = [colour,0,0,0,colour,0,colour,0,colour,0,0,0,colour,0,0,0,0,0,0,0,0,0,0,0,0]
   elif dispType == "2lines":
@@ -89,21 +80,13 @@ def goBack():
     rgb.set_screen(dispMatrix)
     dispMatrix = revMatrix(dispMatrix, 5)
     wait(0.1)
-#    global i
-#    global j
-#    j=6
-#    rgb.set_screen(dispMatrix(i,j))
-#    if i > 4:
-#      i=0
-#    else:
-#      i=i+1
-      
+
 def goLeft():
   global i
   global dispMatrix
   dispMatrix = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
   if dispType == "arrow":
-    dispMatrix = [0,0,0x18ff14,0,0,0,0x18ff14,0,0,0,0x18ff14,0x18ff14,0x18ff14,0x18ff14,0x18ff14,0,0x18ff14,0,0,0,0,0,0x18ff14,0,0]
+    dispMatrix = [0,0,colour,0,0,0,colour,0,0,0,colour,colour,colour,colour,colour,0,colour,0,0,0,0,0,colour,0,0]
   elif dispType == "shortArrow":
     dispMatrix = [0,0,0,0,colour, 0,0,0,colour,0, 0,0,colour,0,0, 0,0,0,colour,0, 0,0,0,0,colour]
   elif dispType == "2lines":
@@ -115,21 +98,13 @@ def goLeft():
     dispMatrix = rotMatrix(dispMatrix, 1)
     #dispMatrix.insert(len(dispMatrix) - 1, dispMatrix.pop(0))
     wait(0.1)
-#    global i
-#    global j
-#    i=6
-#    rgb.set_screen(dispMatrix(i,j))
-#    if j < 0:
-#      j=4
-#    else:
-#      j=j-1
 
 def goRight():
   global i
   global dispMatrix
   dispMatrix = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
   if dispType == "arrow":
-    dispMatrix = [0,0,0x18ff14,0,0,0,0,0,0x18ff14,0,0x18ff14,0x18ff14,0x18ff14,0x18ff14,0x18ff14,0,0,0,0x18ff14,0,0,0,0x18ff14,0,0]
+    dispMatrix = [0,0,colour,0,0,0,0,0,colour,0,colour,colour,colour,colour,colour,0,0,0,colour,0,0,0,colour,0,0]
   elif dispType == "shortArrow":
     dispMatrix = [colour,0,0,0,0, 0,colour,0,0,0, 0,0,colour,0,0, 0,colour,0,0,0, colour,0,0,0,0]
   elif dispType == "2lines":
@@ -141,16 +116,7 @@ def goRight():
     dispMatrix = revMatrix(dispMatrix, 1)
     #dispMatrix.insert(0, dispMatrix.pop(len(dispMatrix) - 1))
     wait(0.1)
-#    global i
-#    global j
-#    i=6
-#    rgb.set_screen(dispMatrix(i,j))
-#    if j > 4:
-#      j=0
-#    else:
-#      j=j+1
- 
-  
+
 while True:
   if (imu0.ypr[1]) > (imu0.ypr[2]) and (imu0.ypr[1]) - (imu0.ypr[2]) > 60:
     if (imu0.ypr[1]) > 0:
