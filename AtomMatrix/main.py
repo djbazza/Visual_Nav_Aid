@@ -13,25 +13,16 @@ from ble_advertising import advertising_payload
 from micropython import const
 
 COLOUR_OFF = (0, 0, 0)
-COLOUR = (16, 16, 0)
+COLOUR = (200, 200, 0)
+delay = 100
 
-FORWARD = [(2, 0), (1, 1), (2, 1), (3, 1), (0, 2), (2, 2), (4, 2), (2, 3), (2, 4)]
-BACK = [(2, 0), (2, 1), (0, 2), (2, 2), (4, 2), (1, 3), (2, 3), (3, 3), (2, 4)]
-TURN_RIGHT = [(2, 0), (3, 1), (0, 2), (1, 2), (2, 2), (3, 2), (4, 2), (3, 3), (2, 4)]
-TURN_LEFT = [(2, 0), (1, 1), (0, 2), (1, 2), (2, 2), (3, 2), (4, 2), (1, 3), (2, 4)]
-
-dispMatrix = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+dispMatrix = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
 a = atom.Matrix()
 a.set_pixels_color(*COLOUR_OFF)
-colour = 0xffff00
 dispType = "2lines"
 i = 0
 j = 0
-
-def set_pixel_color_x_y(x, y, r, g, b):
-    n = (y * 5) + x
-    a.set_pixel_color(n, r, g, b)
 
 def set_screen(dm):
     i = 0
@@ -42,115 +33,111 @@ def set_screen(dm):
             a.set_pixel_color(i, *COLOUR)
         i += 1
 
-def set_pixels_color_x_y(pixels, r, g, b):
-    for x, y in pixels:
-        set_pixel_color_x_y(x, y, r, g, b)
+def dispMatrix(i, j):
+    DispMatrix = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    for x in range(5):
+        for y in range(5):
+            if x == i:
+                DispMatrix[x*5+y] = 1
+            elif y == j:
+                DispMatrix[x*5+y] = 1
+            else:
+                DispMatrix[x*5+y] = 0
+    return DispMatrix
 
-def dispMatrix(i,j):
-  DispMatrix = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-  for x in range(5):
-    for y in range(5):
-      if x == i:
-        DispMatrix[x*5+y] = colour
-      elif y == j:
-        DispMatrix[x*5+y] = colour
-      else:
-        DispMatrix[x*5+y] = 0
-  return DispMatrix
+def rotMatrix(m, q):
+    if q == 1:
+        for o in range(5):
+            m[(o*5)-5] = 0
+    elif q == 5:
+        for o in range(5):
+            m[o] = 0
+    for a in range(q):
+        m.insert(len(m) - 1, m.pop(0))
+    return m
 
-def rotMatrix(m,q):
-  if q == 1:
-    for o in range(5):
-      m[(o*5)-5] = 0
-  elif q == 5:
-    for o in range(5):
-      m[o] = 0
-  for a in range(q):
-    m.insert(len(m) - 1, m.pop(0))
-  return m
-
-def revMatrix(m,q):
-  if q == 1:
-    for o in range(5):
-      m[(o*5)-1] = 0
-  elif q == 5:
-    for o in range(5):
-      m[24-o] = 0
-  for a in range(q):
-    m.insert(0, m.pop(len(m) - 1))
-  return m
+def revMatrix(m, q):
+    if q == 1:
+        for o in range(5):
+            m[(o*5)-1] = 0
+    elif q == 5:
+        for o in range(5):
+            m[24-o] = 0
+    for a in range(q):
+        m.insert(0, m.pop(len(m) - 1))
+    return m
 
 
 def goForward():
-  global i
-  global dispMatrix
-  dispMatrix = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-  if dispType == "arrow":
-    dispMatrix = [0,0,colour,0,0,0,colour,colour,colour,0,colour,0,colour,0,colour,0,0,colour,0,0,0,0,colour,0,0]
-  elif dispType == "shortArrow":
-    dispMatrix = [0,0,0,0,0,0,0,0,0,0,0,0,colour,0,0,0,colour,0,colour,0,colour,0,0,0,colour]
-  elif dispType == "2lines":
-    dispMatrix = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,colour,colour,colour,colour,colour,colour,colour,colour,colour,colour]
-  else:
-    dispMatrix = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,colour,colour,colour,colour,colour]
-  for i in range(5):
-    # dispMatrix = dispMatrix [5: ] + dispMatrix[ :5]
-    set_screen(dispMatrix)
-    dispMatrix = rotMatrix(dispMatrix, 5)
-    time.sleep_ms(50)
+    global i
+    global dispMatrix
+    dispMatrix = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    if dispType == "arrow":
+        dispMatrix = [0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0]
+    elif dispType == "shortArrow":
+        dispMatrix = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1]
+    elif dispType == "2lines":
+        dispMatrix = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+    else:
+        dispMatrix = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1]
+    for i in range(5):
+        # dispMatrix = dispMatrix [5: ] + dispMatrix[ :5]
+        set_screen(dispMatrix)
+        dispMatrix = rotMatrix(dispMatrix, 5)
+        time.sleep_ms(delay)
 
 def goBack():
-  global i
-  global dispMatrix
-  dispMatrix = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-  if dispType == "arrow":
-    dispMatrix = [0,0,colour,0,0,0,0,colour,0,0,colour,0,colour,0,colour,0,colour,colour,colour,0,0,0,colour,0,0]
-  elif dispType == "shortArrow":
-    dispMatrix = [colour,0,0,0,colour,0,colour,0,colour,0,0,0,colour,0,0,0,0,0,0,0,0,0,0,0,0]
-  elif dispType == "2lines":
-    dispMatrix = [colour,colour,colour,colour,colour,colour,colour,colour,colour,colour,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-  else:
-    dispMatrix = [colour,colour,colour,colour,colour,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-  for i in range(5):
-    set_screen(dispMatrix)
-    dispMatrix = revMatrix(dispMatrix, 5)
-    time.sleep_ms(50)
+    global i
+    global dispMatrix
+    dispMatrix = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    if dispType == "arrow":
+        dispMatrix = [0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0]
+    elif dispType == "shortArrow":
+        dispMatrix = [1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    elif dispType == "2lines":
+        dispMatrix = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    else:
+        dispMatrix = [1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    for i in range(5):
+        set_screen(dispMatrix)
+        dispMatrix = revMatrix(dispMatrix, 5)
+        time.sleep_ms(delay)
 
 def goLeft():
-  global i
-  global dispMatrix
-  dispMatrix = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-  if dispType == "arrow":
-    dispMatrix = [0,0,colour,0,0,0,colour,0,0,0,colour,colour,colour,colour,colour,0,colour,0,0,0,0,0,colour,0,0]
-  elif dispType == "shortArrow":
-    dispMatrix = [0,0,0,0,colour, 0,0,0,colour,0, 0,0,colour,0,0, 0,0,0,colour,0, 0,0,0,0,colour]
-  elif dispType == "2lines":
-    dispMatrix = [0,0,0,colour,colour,0,0,0,colour,colour,0,0,0,colour,colour,0,0,0,colour,colour,0,0,0,colour,colour]
-  else:
-    dispMatrix = [0,0,0,0,colour,0,0,0,0,colour,0,0,0,0,colour,0,0,0,0,colour,0,0,0,0,colour]
-  for i in range(5):
-    set_screen(dispMatrix)
-    dispMatrix = rotMatrix(dispMatrix, 1)
-    # dispMatrix.insert(len(dispMatrix) - 1, dispMatrix.pop(0))
-    time.sleep_ms(50)
+    global i
+    global dispMatrix
+    dispMatrix = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    if dispType == "arrow":
+        dispMatrix = [0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0]
+    elif dispType == "shortArrow":
+        dispMatrix = [0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1]
+    elif dispType == "2lines":
+        dispMatrix = [0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1]
+    else:
+        dispMatrix = [0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
+    for i in range(5):
+        set_screen(dispMatrix)
+        dispMatrix = rotMatrix(dispMatrix, 1)
+        # dispMatrix.insert(len(dispMatrix) - 1, dispMatrix.pop(0))
+        time.sleep_ms(delay)
 
 def goRight():
-  global i
-  global dispMatrix
-  dispMatrix = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-  if dispType == "arrow":
-    dispMatrix = [0,0,colour,0,0,0,0,0,colour,0,colour,colour,colour,colour,colour,0,0,0,colour,0,0,0,colour,0,0]
-  elif dispType == "shortArrow":
-    dispMatrix = [colour,0,0,0,0, 0,colour,0,0,0, 0,0,colour,0,0, 0,colour,0,0,0, colour,0,0,0,0]
-  elif dispType == "2lines":
-    dispMatrix = [colour,colour,0,0,0,colour,colour,0,0,0,colour,colour,0,0,0,colour,colour,0,0,0,colour,colour,0,0,0]
-  else:
-    dispMatrix = [colour,0,0,0,0,colour,0,0,0,0,colour,0,0,0,0,colour,0,0,0,0,colour,0,0,0,0]
-  for i in range(5):
-    set_screen(dispMatrix)
-    dispMatrix = revMatrix(dispMatrix, 1)
-    #dispMatrix.insert(0, dispMatrix.pop(len(dispMatrix) - 1))
-    time.sleep_ms(50)
+    global i
+    global dispMatrix
+    dispMatrix = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    if dispType == "arrow":
+        dispMatrix = [0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0]
+    elif dispType == "shortArrow":
+        dispMatrix = [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0]
+    elif dispType == "2lines":
+        dispMatrix = [1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0]
+    else:
+        dispMatrix = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0]
+    for i in range(5):
+        set_screen(dispMatrix)
+        dispMatrix = revMatrix(dispMatrix, 1)
+        # dispMatrix.insert(0, dispMatrix.pop(len(dispMatrix) - 1))
+        time.sleep_ms(delay)
 
 def update_display(new_val):
     global dispType
@@ -168,6 +155,20 @@ def update_display(new_val):
         goRight()
     elif new_val == "arrow" or new_val == "shortArrow" or new_val == "2lines" or new_val == "lines":
         dispType = new_val
+    elif new_val[0] == 'C':
+        nc = list(COLOUR)
+        i = 0
+        for c in tuple(new_val.split(" ")):
+            if c != 'C':
+                print("c: ", c)
+                nc[i] = int(c)
+                i += 1
+        COLOUR = tuple(nc)
+    elif new_val[0] == 'D':
+        print("delay: ", new_val[1: ], "ms")
+        global delay
+        delay = int(new_val[1: ])
+
     a.set_pixels_color(*COLOUR_OFF)
 
 
