@@ -1,21 +1,56 @@
-from m5stack import *
-from m5ui import *
-from uiflow import *
+# This example demonstrates a peripheral implementing the Nordic UART Service (NUS).
+
+# This example demonstrates the low-level bluetooth module. For most
+# applications, we recommend using the higher-level aioble library which takes
+# care of all IRQ handling and connection management. See
+# https://github.com/micropython/micropython-lib/tree/master/micropython/bluetooth/aioble
+
+import atom
 import time
-import imu
+import bluetooth
+from ble_advertising import advertising_payload
+
+from micropython import const
+
+COLOUR_OFF = (0, 0, 0)
+COLOUR = (16, 16, 0)
+
+FORWARD = [(2, 0), (1, 1), (2, 1), (3, 1), (0, 2), (2, 2), (4, 2), (2, 3), (2, 4)]
+BACK = [(2, 0), (2, 1), (0, 2), (2, 2), (4, 2), (1, 3), (2, 3), (3, 3), (2, 4)]
+TURN_RIGHT = [(2, 0), (3, 1), (0, 2), (1, 2), (2, 2), (3, 2), (4, 2), (3, 3), (2, 4)]
+TURN_LEFT = [(2, 0), (1, 1), (0, 2), (1, 2), (2, 2), (3, 2), (4, 2), (1, 3), (2, 4)]
+
 dispMatrix = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-rgb.set_screen(dispMatrix)
-imu0 = imu.IMU()
+
+a = atom.Matrix()
+a.set_pixels_color(*COLOUR_OFF)
 colour = 0xffff00
-dispType = "lines"
+dispType = "2lines"
 i = 0
 j = 0
+
+def set_pixel_color_x_y(x, y, r, g, b):
+    n = (y * 5) + x
+    a.set_pixel_color(n, r, g, b)
+
+def set_screen(dm):
+    i = 0
+    for n in dm:
+        if n == 0:
+            a.set_pixel_color(i, 0, 0, 0)
+        else:
+            a.set_pixel_color(i, *COLOUR)
+        i += 1
+
+def set_pixels_color_x_y(pixels, r, g, b):
+    for x, y in pixels:
+        set_pixel_color_x_y(x, y, r, g, b)
 
 def dispMatrix(i,j):
   DispMatrix = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
   for x in range(5):
     for y in range(5):
-      if x == i: 
+      if x == i:
         DispMatrix[x*5+y] = colour
       elif y == j:
         DispMatrix[x*5+y] = colour
@@ -44,8 +79,8 @@ def revMatrix(m,q):
   for a in range(q):
     m.insert(0, m.pop(len(m) - 1))
   return m
-  
- 
+
+
 def goForward():
   global i
   global dispMatrix
@@ -59,10 +94,10 @@ def goForward():
   else:
     dispMatrix = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,colour,colour,colour,colour,colour]
   for i in range(5):
-    #dispMatrix = dispMatrix [5: ] + dispMatrix[ :5]
-    rgb.set_screen(dispMatrix)
+    # dispMatrix = dispMatrix [5: ] + dispMatrix[ :5]
+    set_screen(dispMatrix)
     dispMatrix = rotMatrix(dispMatrix, 5)
-    wait(0.1)
+    time.sleep_ms(50)
 
 def goBack():
   global i
@@ -77,9 +112,9 @@ def goBack():
   else:
     dispMatrix = [colour,colour,colour,colour,colour,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
   for i in range(5):
-    rgb.set_screen(dispMatrix)
+    set_screen(dispMatrix)
     dispMatrix = revMatrix(dispMatrix, 5)
-    wait(0.1)
+    time.sleep_ms(50)
 
 def goLeft():
   global i
@@ -94,10 +129,10 @@ def goLeft():
   else:
     dispMatrix = [0,0,0,0,colour,0,0,0,0,colour,0,0,0,0,colour,0,0,0,0,colour,0,0,0,0,colour]
   for i in range(5):
-    rgb.set_screen(dispMatrix)
+    set_screen(dispMatrix)
     dispMatrix = rotMatrix(dispMatrix, 1)
-    #dispMatrix.insert(len(dispMatrix) - 1, dispMatrix.pop(0))
-    wait(0.1)
+    # dispMatrix.insert(len(dispMatrix) - 1, dispMatrix.pop(0))
+    time.sleep_ms(50)
 
 def goRight():
   global i
@@ -112,23 +147,134 @@ def goRight():
   else:
     dispMatrix = [colour,0,0,0,0,colour,0,0,0,0,colour,0,0,0,0,colour,0,0,0,0,colour,0,0,0,0]
   for i in range(5):
-    rgb.set_screen(dispMatrix)
+    set_screen(dispMatrix)
     dispMatrix = revMatrix(dispMatrix, 1)
     #dispMatrix.insert(0, dispMatrix.pop(len(dispMatrix) - 1))
-    wait(0.1)
+    time.sleep_ms(50)
 
-while True:
-  if (imu0.ypr[1]) > (imu0.ypr[2]) and (imu0.ypr[1]) - (imu0.ypr[2]) > 60:
-    if (imu0.ypr[1]) > 0:
-      goForward()
-    else:
-      goLeft()
-  elif (imu0.ypr[1]) < (imu0.ypr[2]) and (imu0.ypr[2]) - (imu0.ypr[1]) > 60:
-    if (imu0.ypr[2]) > 0:
-      goRight()
-    else:
-      goBack()
-  else:
-    rgb.set_screen([0,0,0xff0000,0,0,0,0xff0000,0,0xff0000,0,0xff0000,0,0,0,0xff0000,0,0xff0000,0,0xff0000,0,0,0,0xff0000,0,0])
-  wait(0.1)
-  wait_ms(2)
+def update_display(new_val):
+    global dispType
+    # Clear the display.
+    a.set_pixels_color(*COLOUR_OFF)
+
+    global COLOUR
+    if new_val == "FORWARD":
+        goForward()
+    elif new_val == "BACK":
+        goBack()
+    elif new_val == "LEFT":
+        goLeft()
+    elif new_val == "RIGHT":
+        goRight()
+    elif new_val == "arrow" or new_val == "shortArrow" or new_val == "2lines" or new_val == "lines":
+        dispType = new_val
+    a.set_pixels_color(*COLOUR_OFF)
+
+
+_IRQ_CENTRAL_CONNECT = const(1)
+_IRQ_CENTRAL_DISCONNECT = const(2)
+_IRQ_GATTS_WRITE = const(3)
+
+_FLAG_WRITE = const(0x0008)
+_FLAG_NOTIFY = const(0x0010)
+
+_UART_UUID = bluetooth.UUID("6E400001-B5A3-F393-E0A9-E50E24DCCA9E")
+_UART_TX = (
+    bluetooth.UUID("6E400003-B5A3-F393-E0A9-E50E24DCCA9E"),
+    _FLAG_NOTIFY,
+)
+_UART_RX = (
+    bluetooth.UUID("6E400002-B5A3-F393-E0A9-E50E24DCCA9E"),
+    _FLAG_WRITE,
+)
+_UART_SERVICE = (
+    _UART_UUID,
+    (_UART_TX, _UART_RX),
+)
+
+# org.bluetooth.characteristic.gap.appearance.xml
+_ADV_APPEARANCE_GENERIC_COMPUTER = const(128)
+
+
+class BLEUART:
+    def __init__(self, ble, name="direction-assist", rxbuf=100):
+        self._ble = ble
+        self._ble.active(True)
+        self._ble.irq(self._irq)
+        ((self._tx_handle, self._rx_handle),) = self._ble.gatts_register_services((_UART_SERVICE,))
+        # Increase the size of the rx buffer and enable append mode.
+        self._ble.gatts_set_buffer(self._rx_handle, rxbuf, True)
+        self._connections = set()
+        self._rx_buffer = bytearray()
+        self._handler = None
+        # Optionally add services=[_UART_UUID], but this is likely to make the payload too large.
+        self._payload = advertising_payload(name=name, appearance=_ADV_APPEARANCE_GENERIC_COMPUTER)
+        self._advertise()
+
+    def irq(self, handler):
+        self._handler = handler
+
+    def _irq(self, event, data):
+        # Track connections so we can send notifications.
+        if event == _IRQ_CENTRAL_CONNECT:
+            conn_handle, _, _ = data
+            self._connections.add(conn_handle)
+        elif event == _IRQ_CENTRAL_DISCONNECT:
+            conn_handle, _, _ = data
+            if conn_handle in self._connections:
+                self._connections.remove(conn_handle)
+            # Start advertising again to allow a new connection.
+            self._advertise()
+        elif event == _IRQ_GATTS_WRITE:
+            conn_handle, value_handle = data
+            if conn_handle in self._connections and value_handle == self._rx_handle:
+                self._rx_buffer += self._ble.gatts_read(self._rx_handle)
+                if self._handler:
+                    self._handler()
+
+    def any(self):
+        return len(self._rx_buffer)
+
+    def read(self, sz=None):
+        if not sz:
+            sz = len(self._rx_buffer)
+        result = self._rx_buffer[0:sz]
+        self._rx_buffer = self._rx_buffer[sz:]
+        return result
+
+    def write(self, data):
+        for conn_handle in self._connections:
+            self._ble.gatts_notify(conn_handle, self._tx_handle, data)
+
+    def close(self):
+        for conn_handle in self._connections:
+            self._ble.gap_disconnect(conn_handle)
+        self._connections.clear()
+
+    def _advertise(self, interval_us=500000):
+        self._ble.gap_advertise(interval_us, adv_data=self._payload)
+
+
+def nav():
+
+    ble = bluetooth.BLE()
+    uart = BLEUART(ble)
+
+    def on_rx():
+        direct = uart.read().decode().strip()
+        update_display(direct)
+        print("rx: ", direct)
+
+    uart.irq(handler=on_rx)
+    try:
+        while True:
+            # uart.write(uart.read().decode().strip() + "\n")
+            time.sleep_ms(1000)
+    except KeyboardInterrupt:
+        pass
+
+    uart.close()
+
+
+if __name__ == "__main__":
+    nav()
